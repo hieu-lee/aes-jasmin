@@ -1,4 +1,4 @@
-u8 s_box[256] = {
+u8[256] s_box = {
 	0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76, 
 	0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0, 
 	0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15, 
@@ -16,14 +16,14 @@ u8 s_box[256] = {
 	0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 
 	0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16 };
 	
-u8 r_con[10] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
+u8[10] r_con = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
 	
 inline xtime(reg u8 a) -> reg u8 {
 	reg b = (a & 0x80);
 	return (b != 0) ? ((a << 1) ^ 0x1b) : (a << 1);
 }
 	
-inline fn SubBytes(reg u8 state[4][4]) {
+inline fn SubBytes(reg u8[4][4] state) {
 	for i = 0 to 4 {
 		for j = 0 to 4 {
 			state[i][j] = s_box[state[i][j]];
@@ -31,7 +31,7 @@ inline fn SubBytes(reg u8 state[4][4]) {
 	}
 }
 
-inline fn ShiftRows(reg u8 state[4][4]) {
+inline fn ShiftRows(reg u8[4][4] state) {
 	for i = 1 to 4 {
 		reg u8 tmp[4] = { state[0][i], state[1][i], state[2][i], state[3][i] };
 		state[0][i] = tmp[i % 4];
@@ -41,7 +41,7 @@ inline fn ShiftRows(reg u8 state[4][4]) {
 	}
 }
 
-inline fn MixColumns(reg u8 state[4][4]) {
+inline fn MixColumns(reg u8[4][4] state) {
 	for i = 0 to 4 {
 		reg u8 t = state[i][0] ^ state[i][1] ^ state[i][2] ^ state[i][3];
 		reg u8 u = state[i][0];
@@ -52,7 +52,7 @@ inline fn MixColumns(reg u8 state[4][4]) {
 	}
 }
 
-inline fn AddRoundKey(reg u8 state[4][4], reg u8 round_key[4][4]) {
+inline fn AddRoundKey(reg u8[4][4] state, reg u8[4][4] round_key) {
 	for i = 0 to 4 {
 		for j = 0 to 4 {
 			state[i][j] ^= round_key[i][j];
@@ -60,8 +60,8 @@ inline fn AddRoundKey(reg u8 state[4][4], reg u8 round_key[4][4]) {
 	}
 }
 
-inline fn KeyExpension(reg u8 round_key[4][4], inline int round) -> reg u8[4][4] {
-	reg u8 res[4][4];
+inline fn KeyExpension(reg u8[4][4] round_key, inline int round) -> reg u8[4][4] {
+	reg u8[4][4] res;
 	inline u8 c = r_con[round-1];
 	reg u8 temp[4] = { s_box[round_key[3][1]] ^ c, s_box[round_key[3][2]] ^ c, s_box[round_key[3][3]] ^ c, s_box[round_key[3][0]] ^ c };
 	for j = 0 to 4 {
@@ -76,14 +76,14 @@ inline fn KeyExpension(reg u8 round_key[4][4], inline int round) -> reg u8[4][4]
 }
 
 inline fn ArrayToMatrix(reg u128 arr) -> reg u8[4][4] {
-	reg u8 res[4][4];
+	reg u8[4][4] res;
 	for i = 0 to 16 {
 		res[i / 4][i % 4] = arr[i];
 	}
 	return res;
 }
 
-inline fn MatrixToArray(reg u8 matrix[4][4]) -> reg u128 {
+inline fn MatrixToArray(reg u8[4][4] matrix) -> reg u128 {
 	reg u128 res;
 	for i = 0 to 4 {
 		for j = 0 to 4 {
@@ -94,8 +94,8 @@ inline fn MatrixToArray(reg u8 matrix[4][4]) -> reg u128 {
 }
 
 export fn AES128E(reg u128 input, reg u128 key) -> reg u128 {
-	reg u8 state[4][4] = ArrayToMatrix(input);
-	reg u8 round_key[4][4] = ArrayToMatrix(key);
+	reg u8[4][4] state = ArrayToMatrix(input);
+	reg u8[4][4] round_key = ArrayToMatrix(key);
 	AddRoundKey(state, round_key);
 	for round = 1 to 10 {
 		round_key = KeyExpansion(round_key, round); 
